@@ -6,7 +6,7 @@
 
     <groupId>dev.ronaldzav</groupId>
     <artifactId>byebot</artifactId>
-    <version>26.5</version>
+    <version>26.5.2</version>
     <packaging>jar</packaging>
 
     <name>ByeBot</name>
