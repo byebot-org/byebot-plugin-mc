@@ -1,0 +1,29 @@
+# ByeBot — Archivo de idioma: Español
+# Usa formato MiniMessage: https://docs.advntr.dev/minimessage/format.html
+# Los marcadores de posición usan sintaxis {clave}.
+
+prefix: "<dark_gray>[<aqua>ByeBot</aqua>]</dark_gray> "
+
+general:
+  no-permission: "<red>No tienes permiso para hacer eso."
+  reload-not-implemented: "<yellow>La recarga aún no está implementada."
+  checking-updates: "<gray>Buscando actualizaciones..."
+
+command:
+  version: "<aqua>ByeBot</aqua> <dark_aqua>v{version}</dark_aqua>"
+  help-header: "<aqua>ByeBot</aqua> <dark_aqua>v{version}</dark_aqua>"
+  help-version: "  <yellow>/bb version<reset> <gray>— Versión del plugin"
+  help-reload:  "  <yellow>/bb reload<reset>  <gray>— Recargar configuración <dark_gray>(byebot.reload)"
+  help-check:   "  <yellow>/bb check<reset>   <gray>— Buscar actualizaciones <dark_gray>(byebot.admin)"
+
+antibot:
+  block-rate-limit: "<red>Demasiados intentos de conexión desde tu IP. Inténtalo de nuevo más tarde."
+  block-datacenter: "<red>Las conexiones desde IPs de centros de datos no están permitidas."
+  block-blacklisted: "<red>Tu IP ha sido bloqueada en este servidor."
+  block-attack-mode: "<red>El servidor está bajo ataque. Inténtalo más tarde."
+
+attack-mode:
+  verification-required: "<red><bold>⚠ Verificación Requerida</bold></red>"
+  scan-instructions: "<gray>Escanea el código QR para verificar que eres humano:"
+  verify-link: "<yellow>{url}"
+  reconnect-note: "<gray>Después de verificarte, vuelve a conectar al servidor."
