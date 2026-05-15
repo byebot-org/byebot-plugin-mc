@@ -20,8 +20,9 @@ public final class VerifiedPlayersManager {
     private static final long DELTA_INTERVAL_SECONDS = 180;
 
     private final ByeBot plugin;
-    private final ConcurrentHashMap<String, VerifiedPlayer> byUsername = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, VerifiedPlayer> byIp       = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, VerifiedPlayer> byUsername    = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, VerifiedPlayer> byIp          = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Long>           localRoomCache = new ConcurrentHashMap<>();
 
     private volatile String lastSyncTime = null;
 
@@ -33,11 +34,25 @@ public final class VerifiedPlayersManager {
 
     /** Returns {@code true} if either the IP or the username appear in the verified cache. */
     public boolean isVerified(InetAddress address, String username) {
+        Long localExpiry = localRoomCache.get(address.getHostAddress() + ":" + username.toLowerCase());
+        if (localExpiry != null && System.currentTimeMillis() < localExpiry) return true;
+
         VerifiedPlayer ipMatch = byIp.get(address.getHostAddress());
         if (ipMatch != null && !ipMatch.isExpired()) return true;
 
         VerifiedPlayer nameMatch = byUsername.get(username.toLowerCase());
         return nameMatch != null && !nameMatch.isExpired();
+    }
+
+    /**
+     * Marks a player as verified immediately after they exit the waiting room.
+     * This bypasses the API sync delay so the player is recognised on their next
+     * connection without having to wait up to 3 minutes for the delta sync.
+     */
+    public void markVerifiedLocally(InetAddress address, String username) {
+        long expiry = System.currentTimeMillis() + TimeUnit.HOURS.toMillis(24);
+        localRoomCache.put(address.getHostAddress() + ":" + username.toLowerCase(), expiry);
+        plugin.getLogger().info("[Room] {} ({}) — marked as verified locally.", username, address.getHostAddress());
     }
 
     // -------------------------------------------------------------------------

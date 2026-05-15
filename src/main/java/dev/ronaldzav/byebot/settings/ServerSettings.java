@@ -18,7 +18,8 @@ public record ServerSettings(
         RegionSettings   regions,
         AdvancedSettings advanced,
         ListSettings     lists,
-        ServerInfo       server
+        ServerInfo       server,
+        RoomConfig       room
 ) {
 
     // -------------------------------------------------------------------------
@@ -74,8 +75,12 @@ public record ServerSettings(
         static ListSettings defaults() { return new ListSettings(List.of(), List.of()); }
     }
 
-    public record ServerInfo(String id, String name) {
-        static ServerInfo defaults() { return new ServerInfo("", "My Server"); }
+    public record ServerInfo(String id, String name, String verifyUrl, String shortLink) {
+        static ServerInfo defaults() { return new ServerInfo("", "My Server", "", ""); }
+    }
+
+    public record RoomConfig(boolean enabled, boolean useByebot) {
+        static RoomConfig defaults() { return new RoomConfig(false, true); }
     }
 
     // -------------------------------------------------------------------------
@@ -88,18 +93,20 @@ public record ServerSettings(
                 RegionSettings.defaults(),
                 AdvancedSettings.defaults(),
                 ListSettings.defaults(),
-                ServerInfo.defaults()
+                ServerInfo.defaults(),
+                RoomConfig.defaults()
         );
     }
 
     /** Parses from the ByeBot API JSON response (`GET /api/v1/server/settings`). */
     public static ServerSettings fromJson(JsonObject json) {
         return new ServerSettings(
-                parseFirewall    (json.getAsJsonObject("firewall")),
-                parseRegions     (json.getAsJsonObject("regions")),
-                parseAdvanced    (json.getAsJsonObject("advanced")),
-                parseLists       (json.getAsJsonObject("lists")),
-                parseServerInfo  (json.has("server") ? json.getAsJsonObject("server") : null)
+                parseFirewall   (json.getAsJsonObject("firewall")),
+                parseRegions    (json.getAsJsonObject("regions")),
+                parseAdvanced   (json.getAsJsonObject("advanced")),
+                parseLists      (json.getAsJsonObject("lists")),
+                parseServerInfo (json.has("server") ? json.getAsJsonObject("server") : null),
+                parseRoomConfig (json.has("room")   ? json.getAsJsonObject("room")   : null)
         );
     }
 
@@ -110,7 +117,8 @@ public record ServerSettings(
                 parseRegionsYaml    (section(yaml, "regions")),
                 parseAdvancedYaml   (section(yaml, "advanced")),
                 parseListsYaml      (section(yaml, "lists")),
-                parseServerInfoYaml (section(yaml, "server"))
+                parseServerInfoYaml (section(yaml, "server")),
+                RoomConfig.defaults()
         );
     }
 
@@ -118,6 +126,7 @@ public record ServerSettings(
     public Map<String, Object> toYaml() {
         Map<String, Object> root = new LinkedHashMap<>();
         root.put("server",   serverToMap());
+        root.put("room",     roomToMap());
         root.put("firewall",  firewallToMap());
         root.put("regions",   regionsToMap());
         root.put("advanced",  advancedToMap());
@@ -188,11 +197,21 @@ public record ServerSettings(
         return List.copyOf(list);
     }
 
+    private static RoomConfig parseRoomConfig(JsonObject j) {
+        if (j == null) return RoomConfig.defaults();
+        return new RoomConfig(
+                jBool(j, "enabled",     false),
+                jBool(j, "use_byebot",  true)
+        );
+    }
+
     private static ServerInfo parseServerInfo(JsonObject j) {
         if (j == null) return ServerInfo.defaults();
-        String id   = j.has("id")   ? j.get("id").getAsString()   : "";
-        String name = j.has("name") ? j.get("name").getAsString() : "My Server";
-        return new ServerInfo(id, name);
+        String id        = j.has("id")         ? j.get("id").getAsString()         : "";
+        String name      = j.has("name")       ? j.get("name").getAsString()       : "My Server";
+        String verifyUrl = j.has("verify_url") ? j.get("verify_url").getAsString() : "";
+        String shortLink = j.has("short_link") ? j.get("short_link").getAsString() : "";
+        return new ServerInfo(id, name, verifyUrl, shortLink);
     }
 
     private static boolean jBool(JsonObject j, String key, boolean def) {
@@ -258,10 +277,7 @@ public record ServerSettings(
     }
 
     private static ServerInfo parseServerInfoYaml(Map<String, Object> m) {
-        return new ServerInfo(
-                yStr(m, "id",   ""),
-                yStr(m, "name", "My Server")
-        );
+        return new ServerInfo(yStr(m, "id", ""), yStr(m, "name", "My Server"), "", "");
     }
 
     @SuppressWarnings("unchecked")
@@ -335,6 +351,13 @@ public record ServerSettings(
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id",   server.id());
         m.put("name", server.name());
+        return m;
+    }
+
+    private Map<String, Object> roomToMap() {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("enabled",    room.enabled());
+        m.put("use-byebot", room.useByebot());
         return m;
     }
 }

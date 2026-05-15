@@ -35,7 +35,7 @@ public final class QrCodeRenderer {
         Map<EncodeHintType, Object> hints = new EnumMap<>(EncodeHintType.class);
         hints.put(EncodeHintType.MARGIN, 1);
         hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
-        hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.M);
+        hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
 
         BitMatrix matrix = new QRCodeWriter().encode(url, BarcodeFormat.QR_CODE, 0, 0, hints);
         int width  = matrix.getWidth();

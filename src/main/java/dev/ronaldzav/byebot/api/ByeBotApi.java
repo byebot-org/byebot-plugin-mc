@@ -55,6 +55,10 @@ public final class ByeBotApi {
      * Fetches verified players. Pass {@code null} for a full sync, or an ISO-8601
      * timestamp to request only records changed since that point (delta sync).
      */
+    public Optional<JsonObject> fetchRoomConfig() {
+        return get("/rooms");
+    }
+
     public Optional<JsonObject> fetchVerifiedPlayers(String since) {
         String path = "/server/verified-players";
         if (since != null && !since.isBlank()) {

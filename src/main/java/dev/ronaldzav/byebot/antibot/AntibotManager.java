@@ -13,6 +13,8 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 
 import java.net.InetAddress;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -108,13 +110,34 @@ public final class AntibotManager {
             return CheckResult.PASS;
         }
 
-        String serverId = plugin.getServerSettings().server().id();
-        if (serverId == null || serverId.isBlank() || vpm == null) {
+        if (vpm == null) {
             return CheckResult.block(Messages.BLOCK_ATTACK_MODE);
         }
 
-        String url = "https://byebot.org/verify-me?server=" + serverId;
+        String url = buildVerifyUrl(username);
+        if (url == null) {
+            return CheckResult.block(Messages.BLOCK_ATTACK_MODE);
+        }
+
         return CheckResult.blockWithComponent(buildVerificationKick(url));
+    }
+
+    private String buildVerifyUrl(String username) {
+        var info = plugin.getServerSettings().server();
+        String base;
+
+        if (info.shortLink() != null && !info.shortLink().isBlank()) {
+            base = info.shortLink();
+        } else if (info.verifyUrl() != null && !info.verifyUrl().isBlank()) {
+            base = info.verifyUrl();
+        } else if (info.id() != null && !info.id().isBlank()) {
+            base = "https://byebot.org/verify-me?server=" + info.id();
+        } else {
+            return null;
+        }
+
+        String encoded = URLEncoder.encode(username, StandardCharsets.UTF_8);
+        return base + (base.contains("?") ? "&" : "?") + "name=" + encoded;
     }
 
     private Component buildVerificationKick(String url) {
@@ -137,6 +160,43 @@ public final class AntibotManager {
     }
 
     public boolean isAttackMode() { return attackMode; }
+
+    public boolean isWhitelisted(InetAddress address) {
+        return whitelist.contains(address.getHostAddress());
+    }
+
+    /**
+     * Runs only the critical gates: whitelist bypass, blacklist, CPS tracking, attack mode,
+     * and rate-limit. Used in PreLoginEvent when a room server will handle the deeper checks.
+     */
+    public CheckResult testCriticalOnly(InetAddress address, String username) {
+        String ip = address.getHostAddress();
+        if (whitelist.contains(ip)) return CheckResult.PASS;
+        if (blacklist.contains(ip)) return CheckResult.block(Messages.BLOCK_BLACKLISTED);
+
+        trackGlobalCps();
+
+        if (attackMode) return buildAttackModeResult(address, username);
+
+        if (rateLimitCheck != null) {
+            CheckResult r = rateLimitCheck.test(address, username);
+            if (r.blocked()) return r;
+        }
+        return CheckResult.PASS;
+    }
+
+    /**
+     * Runs the non-critical checks (datacenter, name patterns, etc.) without touching
+     * whitelist/blacklist or attack-mode. Used as inline fallback when no room is available.
+     */
+    public CheckResult testChecksOnly(InetAddress address, String username) {
+        for (AntibotCheck check : checks) {
+            if (check == rateLimitCheck) continue; // already enforced in PreLoginEvent
+            CheckResult r = check.test(address, username);
+            if (r.blocked()) return r;
+        }
+        return CheckResult.PASS;
+    }
 
     // -------------------------------------------------------------------------
 

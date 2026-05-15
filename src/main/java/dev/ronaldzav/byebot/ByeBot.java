@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
+import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -19,6 +20,7 @@ import dev.ronaldzav.byebot.listener.ConnectionListener;
 import dev.ronaldzav.byebot.settings.ServerSettings;
 import dev.ronaldzav.byebot.settings.SettingsLoader;
 import dev.ronaldzav.byebot.updater.UpdateChecker;
+import dev.ronaldzav.byebot.room.RoomManager;
 import dev.ronaldzav.byebot.webhook.WebhookServer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LogEvent;
@@ -34,7 +36,12 @@ import java.nio.file.Path;
         version     = "26.5",
         description = "Professional open-source antibot for Velocity",
         url         = "https://github.com/byebot-org/byebot-plugin-mc",
-        authors     = {"RonaldZav"}
+        authors     = {"RonaldZav"},
+        dependencies = {
+                @Dependency(id = "viaversion",   optional = true),
+                @Dependency(id = "viabackwards", optional = true),
+                @Dependency(id = "librelogin",   optional = true)
+        }
 )
 public final class ByeBot {
 
@@ -48,6 +55,7 @@ public final class ByeBot {
     private ServerSettings         serverSettings;
     private AntibotManager         antibotManager;
     private VerifiedPlayersManager verifiedPlayersManager; // null when no api token
+    private RoomManager            roomManager;            // null when api is not configured
     private WebhookServer          webhookServer;          // null when disabled
 
     @Inject
@@ -91,7 +99,12 @@ public final class ByeBot {
             verifiedPlayersManager = new VerifiedPlayersManager(this);
         }
 
-        // 8. Webhook server
+        // 8. Room manager
+        if (api != null && serverSettings.room().enabled()) {
+            roomManager = new RoomManager(this);
+        }
+
+        // 9. Webhook server
         if (config.isWebhookEnabled()) {
             if (api == null) {
                 logger.warn("[Webhook] Webhook requires an api-token — not started.");
@@ -103,7 +116,7 @@ public final class ByeBot {
             }
         }
 
-        // 9. Commands & listeners
+        // 10. Commands & listeners
         server.getCommandManager().register(
                 server.getCommandManager()
                         .metaBuilder("byebot").aliases("bb").plugin(this).build(),
@@ -153,5 +166,6 @@ public final class ByeBot {
     public ServerSettings          getServerSettings()          { return serverSettings;          }
     public AntibotManager          getAntibotManager()          { return antibotManager;          }
     public VerifiedPlayersManager  getVerifiedPlayersManager()  { return verifiedPlayersManager;  }
+    public RoomManager             getRoomManager()             { return roomManager;             }
     public WebhookServer           getWebhookServer()           { return webhookServer;           }
 }

@@ -1,7 +1,7 @@
 {
   "id": "byebot",
   "name": "ByeBot",
-  "version": "${project.version}",
+  "version": "26.5",
   "description": "Professional open-source antibot for Velocity",
   "url": "https://github.com/byebot-org/byebot-plugin-mc",
   "authors": ["RonaldZav"],

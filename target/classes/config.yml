@@ -1,0 +1,43 @@
+# ByeBot Configuration
+# https://github.com/byebot-org/byebot-plugin-mc
+
+# Your ByeBot API token — get one at https://byebot.org
+# Required for: settings-mode byebot, datacenter IP check, proxy detection.
+api-token: ""
+
+# Where antibot settings come from:
+#   local  → read from settings.yml (edit manually like a traditional plugin)
+#   byebot → sync from your ByeBot dashboard on every start/reload (requires api-token)
+settings-mode: local
+
+updater:
+  # Set to false to disable the Modrinth update check entirely.
+  check-updates: true
+
+attack-mode:
+  # Periodically poll the API to sync the under-attack state (requires api-token).
+  auto-refresh: true
+  # How often to poll, in minutes.
+  refresh-interval: 5
+
+webhook:
+  # Start the built-in webhook receiver so the ByeBot API can push events instantly.
+  # When enabled, attack-mode changes and player verifications are applied in real time
+  # instead of waiting for the next poll cycle.
+  enabled: false
+  # Port the webhook server will listen on.
+  port: 8080
+  # Enable TLS (strongly recommended in production).
+  # A self-signed certificate is auto-generated at plugins/byebot/webhook-keystore.p12
+  # on first start — no manual setup needed.
+  ssl: false
+  # Shared secret used to verify that incoming requests come from ByeBot.
+  # Must match the webhook secret configured in your ByeBot dashboard.
+  # Keep this value private — it is NOT your api-token.
+  secret: ""
+
+general:
+  # Plugin language — available: en, es
+  language: "en"
+  # Enable verbose debug logging.
+  debug: false
