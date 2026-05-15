@@ -4,6 +4,7 @@
 .gradle/
 bin/
 .claude
+target/
 
 # Log file
 *.log
